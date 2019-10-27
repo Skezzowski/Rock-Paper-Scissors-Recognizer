@@ -2,7 +2,7 @@ import cv2
 from PIL import Image, ImageTk
 from appJar import gui
 from segmentation import segment_hand_with_background
-from skeleton import skeleton_of_shape
+import skeleton as sk
 
 
 def opencv_image_to_appjar_image(image):
@@ -17,14 +17,23 @@ def submit(btn):
         img = cv2.imread(file_path)
         segmented = segment_hand_with_background(img)
         cv2.imshow('teszt', segmented)
-        skeleton = skeleton_of_shape(segmented)
-        cv2.imshow('vaz', skeleton)
+        skeleton = sk.skeleton_of_shape(segmented)
+        #cv2.imshow('vaz', skeleton)
         bgr = cv2.cvtColor(segmented, cv2.COLOR_GRAY2BGR)
         b, g, r = cv2.split(bgr)
         b = cv2.bitwise_and(b, ~skeleton)
         g = cv2.bitwise_and(g, ~skeleton)
         bgr = cv2.merge((b, g, r))
         cv2.imshow('osszegezve', bgr)
+
+        endpoints = sk.skeleton_endpoints(skeleton)
+        bgr = cv2.cvtColor(skeleton, cv2.COLOR_GRAY2BGR)
+        b, g, r = cv2.split(bgr)
+        b = cv2.bitwise_and(b, ~endpoints)
+        g = cv2.bitwise_and(g, ~endpoints)
+        bgr = cv2.merge((b, g, r))
+        cv2.imshow('csucs', bgr)
+
         app.reloadImageData("pic", opencv_image_to_appjar_image(img), fmt="PhotoImage")
 
 
