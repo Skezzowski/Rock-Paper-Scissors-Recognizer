@@ -2,6 +2,7 @@ import cv2
 from PIL import Image, ImageTk
 from appJar import gui
 from segmentation import segment_hand_with_background
+import recognize as rec
 import skeleton as sk
 
 
@@ -17,6 +18,11 @@ def submit(btn):
         img = cv2.imread(file_path)
         segmented = segment_hand_with_background(img)
         cv2.imshow('teszt', segmented)
+        app.reloadImageData("pic", opencv_image_to_appjar_image(img), fmt="PhotoImage")
+
+        app.setLabel("result", rec.recognize(segmented))
+
+
         skeleton = sk.skeleton_of_shape(segmented)
         #cv2.imshow('vaz', skeleton)
         bgr = cv2.cvtColor(segmented, cv2.COLOR_GRAY2BGR)
@@ -34,8 +40,6 @@ def submit(btn):
         bgr = cv2.merge((b, g, r))
         cv2.imshow('csucs', bgr)
 
-        app.reloadImageData("pic", opencv_image_to_appjar_image(img), fmt="PhotoImage")
-
 
 app = gui("RPS Recognizer")
 app.setStretch("none")
@@ -51,6 +55,6 @@ im = Image.fromarray(image)
 imtk = ImageTk.PhotoImage(im)
 
 app.addImageData("pic", imtk, fmt="PhotoImage")
-
+app.addLabel("result", "fa")
 
 app.go()

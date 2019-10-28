@@ -13,7 +13,7 @@ def segment_hand_with_background(picture):
     binary_image = change_binary_image_colors(binary_image)
 
     kernel = np.ones((5, 5), np.uint8)
-    return morphology_filter(binary_image, kernel)
+    return rotate_while_not_aligned(morphology_filter(binary_image, kernel))
 
 
 def segment_hand_with_skin(picture):
@@ -27,7 +27,7 @@ def segment_hand_with_skin(picture):
 
     binary_image = to_binary(masked)
     kernel = np.ones((5, 5), np.uint8)
-    return morphology_filter(binary_image, kernel)
+    return rotate_while_not_aligned(morphology_filter(binary_image, kernel))
 
 
 def to_binary(img):
@@ -54,3 +54,24 @@ def change_binary_image_colors(binary_image):
             else:
                 binary_image[y, x] = 255
     return binary_image
+
+
+def rotate_while_not_aligned(segmented):
+    last_column = 0
+    h = segmented.shape[0]
+    w = segmented.shape[1]
+
+    for y in range(0, h):
+        if segmented[y, w - 1] == 255:
+            last_column += 1
+
+    while last_column < 50:
+        last_column = 0
+        segmented = np.rot90(segmented)
+        h = segmented.shape[0]
+        w = segmented.shape[1]
+        cv2.imshow("rotated", segmented)
+        for y in range(0, h):
+            if segmented[y, w - 1] == 255:
+                last_column += 1
+    return segmented
