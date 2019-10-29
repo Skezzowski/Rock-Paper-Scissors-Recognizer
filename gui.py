@@ -32,7 +32,7 @@ def submit(btn):
         bgr = cv2.merge((b, g, r))
         cv2.imshow('osszegezve', bgr)
 
-        endpoints = sk.skeleton_endpoints(skeleton)
+        endpoints = sk.skeleton_nodes(skeleton)
         bgr = cv2.cvtColor(skeleton, cv2.COLOR_GRAY2BGR)
         b, g, r = cv2.split(bgr)
         b = cv2.bitwise_and(b, ~endpoints)
