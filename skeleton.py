@@ -4,6 +4,16 @@ import numpy as np
 
 def skeleton_of_shape(img):
     thn = cv2.ximgproc.thinning(img, None, thinningType=cv2.ximgproc.THINNING_ZHANGSUEN)
+    w = thn.shape[1]
+    h = thn.shape[0]
+
+    for y in range(0, h):
+        thn[y, w-1] = 0
+        thn[y, 0] = 0
+    for x in range(0, w):
+        thn[h - 1, x] = 0
+        thn[0, x] = 0
+
     return thn
 
 
@@ -21,7 +31,6 @@ def endpoints(img):
     out = np.zeros_like(skel)
     out[filtered == 11] = 255
 
-    cv2.imshow('out', out)
     return out
 
 
@@ -41,7 +50,6 @@ def inner_nodes(img):
     out[filtered == 17] = 255
     out[filtered == 22] = 255
 
-    cv2.imshow('out2', out)
     return out
 
 

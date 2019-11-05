@@ -20,25 +20,23 @@ def submit(btn):
         cv2.imshow('teszt', segmented)
         app.reloadImageData("pic", opencv_image_to_appjar_image(img), fmt="PhotoImage")
 
-        app.setLabel("result", rec.recognize(segmented))
-
-
         skeleton = sk.skeleton_of_shape(segmented)
-        #cv2.imshow('vaz', skeleton)
         bgr = cv2.cvtColor(segmented, cv2.COLOR_GRAY2BGR)
         b, g, r = cv2.split(bgr)
         b = cv2.bitwise_and(b, ~skeleton)
         g = cv2.bitwise_and(g, ~skeleton)
         bgr = cv2.merge((b, g, r))
+
         cv2.imshow('osszegezve', bgr)
 
-        endpoints = sk.skeleton_nodes(skeleton)
+        points = sk.skeleton_nodes(skeleton)
         bgr = cv2.cvtColor(skeleton, cv2.COLOR_GRAY2BGR)
         b, g, r = cv2.split(bgr)
-        b = cv2.bitwise_and(b, ~endpoints)
-        g = cv2.bitwise_and(g, ~endpoints)
+        b = cv2.bitwise_and(b, ~points)
+        g = cv2.bitwise_and(g, ~points)
         bgr = cv2.merge((b, g, r))
-        cv2.imshow('csucs', bgr)
+
+        app.setLabel("result", rec.recognize(segmented, points, skeleton))
 
 
 app = gui("RPS Recognizer")
