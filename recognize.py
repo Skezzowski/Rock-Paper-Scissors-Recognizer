@@ -12,9 +12,16 @@ def recognize(segmented, main_points, skeleton):
     if check_if_scissors(edges):
         return "scissors"
 
-    coordinates = points_to_coordinates(main_points)
+    chance_of_paper = check_if_paper(skeleton)
+    chance_of_rock = check_if_rock(skeleton)
+    print(chance_of_paper)
+    print(chance_of_rock)
+    if chance_of_paper > 0 or chance_of_rock > 0:
+        if chance_of_rock > chance_of_paper:
+            return "rock"
+        else:
+            return "paper"
 
-    print(check_if_paper(skeleton))
 
     return "dunno"
 
@@ -26,19 +33,65 @@ def check_if_paper(skeleton):
     innerpoint_coordinates = points_to_coordinates(sk.inner_nodes(skeleton))
     distence_between_firstandlast = calculate_distance(endpoint_coordinates[0],
                                                        endpoint_coordinates[len(endpoint_coordinates)-1])
-    print(distence_between_firstandlast)
+    print(innerpoint_coordinates)
+    skeleton_array = np.zeros(shape=(h,))
+
+    for y in range(0, h):
+        for x in range(0, w):
+            if skeleton[y, x] == 255:
+                skeleton_array[y] = skeleton_array[y] + 1
+
+    chance_of_paper = 0
+## ha csak egy egyenes az egész valószínűleg papír
     if len(endpoint_coordinates) == 2:
         skeleton_length = 0
         for x in range(0, w):
             for y in range(0, h):
                 if skeleton[y, x] == 255:
                     skeleton_length = skeleton_length + 1
-        print(skeleton_length)
-        if distence_between_firstandlast < skeleton_length < distence_between_firstandlast + 15:
-            return "paper"
 
-    print(innerpoint_coordinates)
-    print(endpoint_coordinates)
+        if distence_between_firstandlast < skeleton_length < distence_between_firstandlast + 15:
+            chance_of_paper = 50
+
+## a legbalodalibb csúcs és a második között nagy távolság van
+    if endpoint_coordinates[1].x - endpoint_coordinates[0].x > 70 and len(endpoint_coordinates) > 2:
+        chance_of_paper = chance_of_paper + 20
+
+## egy kupacba több csúcs is van a legbaloldalibb csúcs közelében
+    if endpoint_coordinates[1].x - endpoint_coordinates[0].x < 40 and math.fabs(endpoint_coordinates[1].y
+                                                                                - endpoint_coordinates[0].y) < 40:
+        chance_of_paper = chance_of_paper + 25
+
+    return chance_of_paper
+
+
+def check_if_rock(skeleton):
+    w = skeleton.shape[1]
+    h = skeleton.shape[0]
+    skeleton_array = np.zeros(shape=(h,))
+    skeleton_coordinates = []
+
+    chance_of_rock = 0
+
+    for y in range(0, h):
+        for x in range(0, w):
+            if skeleton[y, x] == 255:
+                skeleton_array[y] = skeleton_array[y] + 1
+                skeleton_coordinates.append(Point(x,y))
+                break
+
+    max_x_distence = 0
+    for i in range(0, len(skeleton_coordinates)):
+        if i < len(skeleton_coordinates) - 1:
+            temp_distence = math.fabs(skeleton_coordinates[i].x - skeleton_coordinates[i+1].x)
+            if temp_distence > max_x_distence:
+                max_x_distence = temp_distence
+
+    ## kicsi marad a távolság egyes pontok között x tengelyen, és csontváz elnyúlik az y tengelyen
+    if max_x_distence < 60 and skeleton_coordinates[len(skeleton_coordinates)-1].y - skeleton_coordinates[0].y > 40:
+        chance_of_rock = chance_of_rock + 25
+
+    return chance_of_rock
 
 
 def calculate_distance(a, b):
