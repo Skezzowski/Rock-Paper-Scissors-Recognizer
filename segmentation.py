@@ -65,13 +65,16 @@ def rotate_while_not_aligned(segmented):
         if segmented[y, w - 1] == 255:
             last_column += 1
 
+    trial = 0
     while last_column < 50:
+        trial = trial + 1
         last_column = 0
         segmented = np.rot90(segmented)
         h = segmented.shape[0]
         w = segmented.shape[1]
-        cv2.imshow("rotated", segmented)
         for y in range(0, h):
             if segmented[y, w - 1] == 255:
                 last_column += 1
+        if trial == 4:
+            break
     return segmented

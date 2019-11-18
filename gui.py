@@ -26,17 +26,9 @@ def submit(btn):
         b = cv2.bitwise_and(b, ~skeleton)
         g = cv2.bitwise_and(g, ~skeleton)
         bgr = cv2.merge((b, g, r))
-
         cv2.imshow('osszegezve', bgr)
 
-        points = sk.skeleton_nodes(skeleton)
-        bgr = cv2.cvtColor(skeleton, cv2.COLOR_GRAY2BGR)
-        b, g, r = cv2.split(bgr)
-        b = cv2.bitwise_and(b, ~points)
-        g = cv2.bitwise_and(g, ~points)
-        bgr = cv2.merge((b, g, r))
-
-        app.setLabel("result", rec.recognize(segmented, points, skeleton))
+        app.setLabel("result", rec.recognize(segmented, skeleton))
 
 
 app = gui("RPS Recognizer")

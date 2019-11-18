@@ -6,7 +6,7 @@ import skeleton as sk
 np.set_printoptions(threshold=np.inf)
 
 
-def recognize(segmented, main_points, skeleton):
+def recognize(segmented, skeleton):
     edges = cv2.Canny(segmented, 100, 200)
 
     if check_if_scissors(edges):
@@ -14,15 +14,13 @@ def recognize(segmented, main_points, skeleton):
 
     chance_of_paper = check_if_paper(skeleton)
     chance_of_rock = check_if_rock(skeleton)
-    print(chance_of_paper)
-    print(chance_of_rock)
+    print("Chance of paper: " + str(chance_of_paper))
+    print("Chance of rock: " + str(chance_of_rock))
     if chance_of_paper > 0 or chance_of_rock > 0:
         if chance_of_rock > chance_of_paper:
             return "rock"
         else:
             return "paper"
-
-
     return "dunno"
 
 
@@ -33,7 +31,6 @@ def check_if_paper(skeleton):
     innerpoint_coordinates = points_to_coordinates(sk.inner_nodes(skeleton))
     distence_between_firstandlast = calculate_distance(endpoint_coordinates[0],
                                                        endpoint_coordinates[len(endpoint_coordinates)-1])
-    print(innerpoint_coordinates)
     skeleton_array = np.zeros(shape=(h,))
 
     for y in range(0, h):
@@ -42,7 +39,7 @@ def check_if_paper(skeleton):
                 skeleton_array[y] = skeleton_array[y] + 1
 
     chance_of_paper = 0
-## ha csak egy egyenes az egész valószínűleg papír
+    ## ha csak egy egyenes az egész valószínűleg papír
     if len(endpoint_coordinates) == 2:
         skeleton_length = 0
         for x in range(0, w):
@@ -53,14 +50,36 @@ def check_if_paper(skeleton):
         if distence_between_firstandlast < skeleton_length < distence_between_firstandlast + 15:
             chance_of_paper = 50
 
-## a legbalodalibb csúcs és a második között nagy távolság van
+    ## a legbalodalibb csúcs és a második között nagy távolság van
     if endpoint_coordinates[1].x - endpoint_coordinates[0].x > 70 and len(endpoint_coordinates) > 2:
         chance_of_paper = chance_of_paper + 20
 
-## egy kupacba több csúcs is van a legbaloldalibb csúcs közelében
-    if endpoint_coordinates[1].x - endpoint_coordinates[0].x < 40 and math.fabs(endpoint_coordinates[1].y
-                                                                                - endpoint_coordinates[0].y) < 40:
-        chance_of_paper = chance_of_paper + 25
+    ## Végpontok es inner pontok elhelyezkedésének vizsgálata
+    k = 0
+    i = 1
+    close_endpoints_number = 0
+    while i < len(endpoint_coordinates) and endpoint_coordinates[i].x - endpoint_coordinates[k].x < 40:
+        k = k+1
+        i = i+1
+        close_endpoints_number = close_endpoints_number + 1
+
+    if close_endpoints_number == 1 and len(innerpoint_coordinates) > 0:
+
+        if innerpoint_coordinates[0].x - endpoint_coordinates[0].x > 40:
+            chance_of_paper = chance_of_paper + 12
+        if innerpoint_coordinates[0].x - endpoint_coordinates[1].x > 40:
+            chance_of_paper = chance_of_paper + 12
+
+    if close_endpoints_number == 2 and len(innerpoint_coordinates) > 0:
+        if innerpoint_coordinates[0].x - endpoint_coordinates[0].x > 40 \
+                or innerpoint_coordinates[0].x - endpoint_coordinates[1].x > 40 \
+                or innerpoint_coordinates[0].x - endpoint_coordinates[2].x > 40:
+            chance_of_paper = chance_of_paper + 25
+
+        if innerpoint_coordinates[1].x - endpoint_coordinates[0].x > 40 \
+                or innerpoint_coordinates[1].x - endpoint_coordinates[1].x > 40 \
+                or innerpoint_coordinates[1].x - endpoint_coordinates[2].x > 40:
+            chance_of_paper = chance_of_paper + 25
 
     return chance_of_paper
 
@@ -70,6 +89,8 @@ def check_if_rock(skeleton):
     h = skeleton.shape[0]
     skeleton_array = np.zeros(shape=(h,))
     skeleton_coordinates = []
+    endpoint_coordinates = points_to_coordinates(sk.endpoints(skeleton))
+    innerpoint_coordinates = points_to_coordinates(sk.inner_nodes(skeleton))
 
     chance_of_rock = 0
 
@@ -91,11 +112,36 @@ def check_if_rock(skeleton):
     if max_x_distence < 60 and skeleton_coordinates[len(skeleton_coordinates)-1].y - skeleton_coordinates[0].y > 40:
         chance_of_rock = chance_of_rock + 25
 
+
+    ## Végpontok es inner pontok elhelyezkedésének vizsgálata
+    k = 0
+    i = 1
+    close_endpoints_number = 0
+    while i < len(endpoint_coordinates) and endpoint_coordinates[i].x - endpoint_coordinates[k].x < 40:
+        k = k + 1
+        i = i + 1
+        close_endpoints_number = close_endpoints_number + 1
+
+    if close_endpoints_number == 1 and len(innerpoint_coordinates) > 0:
+        if innerpoint_coordinates[0].x - endpoint_coordinates[0].x < 40:
+            chance_of_rock = chance_of_rock + 12
+        if innerpoint_coordinates[0].x - endpoint_coordinates[1].x < 40:
+            chance_of_rock = chance_of_rock + 12
+
+    if close_endpoints_number == 2 and len(innerpoint_coordinates) > 0:
+        if innerpoint_coordinates[0].x - endpoint_coordinates[0].x < 40 \
+                and innerpoint_coordinates[0].x - endpoint_coordinates[1].x < 40 \
+                and innerpoint_coordinates[0].x - endpoint_coordinates[2].x < 40:
+            chance_of_rock = chance_of_rock + 12
+        if innerpoint_coordinates[1].x - endpoint_coordinates[0].x < 40 \
+                and innerpoint_coordinates[1].x - endpoint_coordinates[1].x < 40 \
+                and innerpoint_coordinates[1].x - endpoint_coordinates[2].x < 40:
+            chance_of_rock = chance_of_rock + 12
+
+    if close_endpoints_number > 0 and len(innerpoint_coordinates) == 0:
+        chance_of_rock = chance_of_rock + 12
+
     return chance_of_rock
-
-
-def calculate_distance(a, b):
-    return math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
 
 
 def check_if_scissors(edges):
@@ -125,6 +171,10 @@ def points_to_coordinates(points):
             if points[y, x] == 255:
                 coordinates.append(Point(x, y))
     return coordinates
+
+
+def calculate_distance(a, b):
+    return math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
 
 
 class Point:
