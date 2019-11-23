@@ -40,7 +40,7 @@ app.addButton("Submit", submit)
 
 
 #  default image
-image = cv2.imread("images/testing/tree.jpg")
+image = cv2.imread("images/testing/testing-3.png")
 im = Image.fromarray(image)
 imtk = ImageTk.PhotoImage(im)
 

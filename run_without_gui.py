@@ -36,3 +36,5 @@ if len(wrong_files) > 0 :
     print("Wrong files:")
     for filepath in wrong_files:
         print(filepath)
+
+input()

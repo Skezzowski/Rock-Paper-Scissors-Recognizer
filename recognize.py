@@ -16,12 +16,13 @@ def recognize(segmented, skeleton):
     chance_of_rock = check_if_rock(skeleton)
     print("Chance of paper: " + str(chance_of_paper))
     print("Chance of rock: " + str(chance_of_rock))
-    if chance_of_paper > 0 or chance_of_rock > 0:
-        if chance_of_rock > chance_of_paper:
-            return "rock"
-        else:
-            return "paper"
-    return "dunno"
+    if chance_of_paper == chance_of_rock:
+        return "Cannot recognize"
+
+    if chance_of_rock > chance_of_paper:
+        return "rock"
+    else:
+        return "paper"
 
 
 def check_if_paper(skeleton):
@@ -29,7 +30,7 @@ def check_if_paper(skeleton):
     h = skeleton.shape[0]
     endpoint_coordinates = points_to_coordinates(sk.endpoints(skeleton))
     innerpoint_coordinates = points_to_coordinates(sk.inner_nodes(skeleton))
-    distence_between_firstandlast = calculate_distance(endpoint_coordinates[0],
+    distance_between_firstandlast = calculate_distance(endpoint_coordinates[0],
                                                        endpoint_coordinates[len(endpoint_coordinates)-1])
     skeleton_array = np.zeros(shape=(h,))
 
@@ -47,7 +48,7 @@ def check_if_paper(skeleton):
                 if skeleton[y, x] == 255:
                     skeleton_length = skeleton_length + 1
 
-        if distence_between_firstandlast < skeleton_length < distence_between_firstandlast + 15:
+        if distance_between_firstandlast < skeleton_length < distance_between_firstandlast + 15:
             chance_of_paper = 50
 
     ## a legbalodalibb csúcs és a második között nagy távolság van
@@ -70,7 +71,7 @@ def check_if_paper(skeleton):
         if innerpoint_coordinates[0].x - endpoint_coordinates[1].x > 40:
             chance_of_paper = chance_of_paper + 12
 
-    if close_endpoints_number == 2 and len(innerpoint_coordinates) > 0:
+    if close_endpoints_number == 2 and len(innerpoint_coordinates) > 1:
         if innerpoint_coordinates[0].x - endpoint_coordinates[0].x > 40 \
                 or innerpoint_coordinates[0].x - endpoint_coordinates[1].x > 40 \
                 or innerpoint_coordinates[0].x - endpoint_coordinates[2].x > 40:
@@ -93,25 +94,24 @@ def check_if_rock(skeleton):
     innerpoint_coordinates = points_to_coordinates(sk.inner_nodes(skeleton))
 
     chance_of_rock = 0
-
+   ## pásztázás vízszintesen a görbülés vizsgálat miatt
     for y in range(0, h):
         for x in range(0, w):
             if skeleton[y, x] == 255:
                 skeleton_array[y] = skeleton_array[y] + 1
-                skeleton_coordinates.append(Point(x,y))
+                skeleton_coordinates.append(Point(x, y))
                 break
 
-    max_x_distence = 0
+    max_x_distance = 0
     for i in range(0, len(skeleton_coordinates)):
         if i < len(skeleton_coordinates) - 1:
             temp_distence = math.fabs(skeleton_coordinates[i].x - skeleton_coordinates[i+1].x)
-            if temp_distence > max_x_distence:
-                max_x_distence = temp_distence
+            if temp_distence > max_x_distance:
+                max_x_distance = temp_distence
 
-    ## kicsi marad a távolság egyes pontok között x tengelyen, és csontváz elnyúlik az y tengelyen
-    if max_x_distence < 60 and skeleton_coordinates[len(skeleton_coordinates)-1].y - skeleton_coordinates[0].y > 40:
+    ## kicsi marad a távolság egyes pontok között x tengelyen, és csontváz elnyúlik az y tengelyen (görbülés vizsgálat)
+    if max_x_distance < 60 and skeleton_coordinates[len(skeleton_coordinates)-1].y - skeleton_coordinates[0].y > 40:
         chance_of_rock = chance_of_rock + 25
-
 
     ## Végpontok es inner pontok elhelyezkedésének vizsgálata
     k = 0
@@ -128,7 +128,7 @@ def check_if_rock(skeleton):
         if innerpoint_coordinates[0].x - endpoint_coordinates[1].x < 40:
             chance_of_rock = chance_of_rock + 12
 
-    if close_endpoints_number == 2 and len(innerpoint_coordinates) > 0:
+    if close_endpoints_number == 2 and len(innerpoint_coordinates) > 1:
         if innerpoint_coordinates[0].x - endpoint_coordinates[0].x < 40 \
                 and innerpoint_coordinates[0].x - endpoint_coordinates[1].x < 40 \
                 and innerpoint_coordinates[0].x - endpoint_coordinates[2].x < 40:
